@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-include __DIR__.'/functions/config.php';
+include __DIR__.'/../functions/config.php';
 
 // === AUTO DEBUG MODE ===
 // Aktif hanya kalau akses dari browser (ada ?debug atau tidak ada JSON input)
