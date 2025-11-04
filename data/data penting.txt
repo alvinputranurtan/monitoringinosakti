@@ -1,0 +1,22 @@
+host = inosakti.com
+user = inosakti_iot_core_user
+password = inosakti_iot_core_pass
+dbname = inosakti_iot_core
+
+teknologi yang digunakan:
+HTML
+CSS
+JavaScript
+PHP
+MySQL
+Bootstrap
+jQuery
+AJAX
+JSON
+REST API
+SASS
+CHARTJS
+NODEJS
+EXPRESSJS
+ESP32
+FREERTOS

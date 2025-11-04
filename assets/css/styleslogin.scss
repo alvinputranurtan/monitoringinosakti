@@ -1,0 +1,92 @@
+// styleslogin.scss
+.login-wrapper {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url('../foto/background.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.login-box {
+  background: rgba(200, 200, 200, 0.9);
+  padding: 40px 30px;
+  border-radius: 30px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  color: #000;
+
+input.form-control-custom {
+  background: #666;
+  color: #fff;
+  // font-family: 'Poppins', sans-serif;
+  // font-weight: 700;          // TEKS TEBAL
+  // font-size: 1.2rem;         // TEKS LEBIH BESAR
+  box-sizing: border-box;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  width: 100%;
+  text-align: center;
+  transition: background 0.2s ease;
+
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+
+  &::placeholder {
+    // font-weight: 400;
+    color: #fff;
+  }
+
+  &:focus {
+    outline: none;
+    background: #777;
+  }
+}
+
+// Atasi autofill override
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  // font-size: 1.1rem !important;
+  // font-weight: bold !important;
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 0 0 1000px #666 inset !important;
+  border-radius: 20px;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.btn-login {
+  background: #666;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: #888;
+  }
+}
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-internal-autofill-selected {
+  // font-size: 1.2rem !important;
+  // font-weight: 700 !important;
+  -webkit-text-fill-color: #fff !important;
+  background-color: #666 !important;
+  box-shadow: 0 0 0 1000px #555 inset !important;
+  border-radius: 20px !important;
+  transition: background-color 0s ease-in-out 0s;
+}
+
+

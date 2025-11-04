@@ -1,0 +1,76 @@
+.login-wrapper {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../foto/background.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.login-box {
+  background: rgba(200, 200, 200, 0.9);
+  padding: 40px 30px;
+  border-radius: 30px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  color: #000;
+}
+.login-box input.form-control-custom {
+  background: #666;
+  color: #fff;
+  box-sizing: border-box;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  width: 100%;
+  text-align: center;
+  transition: background 0.2s ease;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+}
+.login-box input.form-control-custom::-moz-placeholder {
+  color: #fff;
+}
+.login-box input.form-control-custom::placeholder {
+  color: #fff;
+}
+.login-box input.form-control-custom:focus {
+  outline: none;
+  background: #777;
+}
+.login-box input:-webkit-autofill,
+.login-box input:-webkit-autofill:hover,
+.login-box input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff !important;
+  box-shadow: 0 0 0 1000px #666 inset !important;
+  border-radius: 20px;
+  -webkit-transition: background-color 5000s ease-in-out 0s;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.login-box .btn-login {
+  background: #666;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+.login-box .btn-login:hover {
+  background: #888;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-internal-autofill-selected {
+  -webkit-text-fill-color: #fff !important;
+  background-color: #666 !important;
+  box-shadow: 0 0 0 1000px #555 inset !important;
+  border-radius: 20px !important;
+  -webkit-transition: background-color 0s ease-in-out 0s;
+  transition: background-color 0s ease-in-out 0s;
+}/*# sourceMappingURL=styleslogin.css.map */
