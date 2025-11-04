@@ -1,7 +1,7 @@
 <?php
 
 // ===============================
-// AJAX DASHBOARD (versi fix status dan tanpa milisecond)
+// AJAX DASHBOARD (fix status Offline terus)
 // ===============================
 
 date_default_timezone_set('Asia/Jakarta');
@@ -19,12 +19,8 @@ if (!isset($_SESSION['user_id'])) {
 
 $current_user_id = (int) $_SESSION['user_id'];
 
-// Ambil data monitor terakhir + waktu server last_seen
 $sql = '
-SELECT 
-    m.data_monitor, 
-    m.created_at,
-    d.last_seen
+SELECT m.data_monitor, m.created_at
 FROM monitor m
 JOIN devices d ON m.device_id = d.id
 WHERE d.user_id = ?
@@ -44,21 +40,29 @@ $response = [
 ];
 
 if ($row && isset($row['data_monitor'])) {
-    // Decode data sensor
     $data = json_decode($row['data_monitor'], true) ?? [];
     $response['data'] = $data;
 
-    // Format waktu tampil tanpa milidetik
-    $response['created_at'] = $row['created_at']
-        ? date('Y-m-d H:i:s', strtotime($row['created_at']))
-        : null;
+    // Format created_at tanpa milidetik
+    $formatted_time = date('Y-m-d H:i:s', strtotime($row['created_at']));
+    $response['created_at'] = $formatted_time;
 
-    // Gunakan waktu server (last_seen) untuk menentukan status Online/Offline
-    $last_seen_ts = $row['last_seen'] ? strtotime($row['last_seen']) : false;
-    $threshold = 30; // detik, bisa kamu ubah sesuai kebutuhan
-    if ($last_seen_ts !== false && (time() - $last_seen_ts) <= $threshold) {
+    // --- Hitung selisih waktu dengan timezone yang sama ---
+    $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+    $last = new DateTime($row['created_at'], new DateTimeZone('Asia/Jakarta'));
+    $diff = $now->getTimestamp() - $last->getTimestamp();
+
+    // Kalau selisih <= 60 detik, berarti Online
+    if ($diff <= 60) {
         $response['status_perangkat'] = 'Online';
     }
+
+    // Debug opsional (hapus setelah yakin)
+    $response['debug'] = [
+        'now' => $now->format('Y-m-d H:i:s'),
+        'created_at' => $formatted_time,
+        'diff_seconds' => $diff,
+    ];
 }
 
 header('Content-Type: application/json; charset=utf-8');

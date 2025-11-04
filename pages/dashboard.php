@@ -32,7 +32,7 @@ if ($row && isset($row['data_monitor'])) {
     $data = json_decode($row['data_monitor'], true) ?? [];
 
     $last_time = strtotime($row['created_at']);
-    if ($last_time !== false && (time() - $last_time) <= 60) {
+    if ($last_time !== false && (time() - $last_time) <= 30) {
         $status_perangkat = 'Online';
     }
 }
