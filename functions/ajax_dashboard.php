@@ -1,29 +1,30 @@
 <?php
 
 // ===============================
-// AJAX DASHBOARD (versi fix, tanpa milisecond)
+// AJAX DASHBOARD (versi fix status dan tanpa milisecond)
 // ===============================
 
 date_default_timezone_set('Asia/Jakarta');
 include __DIR__.'/../functions/config.php';
 
-// Pastikan session aktif
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Cek autentikasi
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorized']);
     exit;
 }
 
-$current_user_id = $_SESSION['user_id'];
+$current_user_id = (int) $_SESSION['user_id'];
 
-// Ambil data terakhir dari device milik user
+// Ambil data monitor terakhir + waktu server last_seen
 $sql = '
-SELECT m.data_monitor, m.created_at
+SELECT 
+    m.data_monitor, 
+    m.created_at,
+    d.last_seen
 FROM monitor m
 JOIN devices d ON m.device_id = d.id
 WHERE d.user_id = ?
@@ -36,7 +37,6 @@ $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 
-// Siapkan struktur respons dasar
 $response = [
     'status_perangkat' => 'Offline',
     'created_at' => null,
@@ -44,20 +44,22 @@ $response = [
 ];
 
 if ($row && isset($row['data_monitor'])) {
+    // Decode data sensor
     $data = json_decode($row['data_monitor'], true) ?? [];
     $response['data'] = $data;
 
-    // Format waktu agar tanpa milidetik dan sesuai zona WIB
-    $formatted_time = date('Y-m-d H:i:s', strtotime($row['created_at']));
-    $response['created_at'] = $formatted_time;
+    // Format waktu tampil tanpa milidetik
+    $response['created_at'] = $row['created_at']
+        ? date('Y-m-d H:i:s', strtotime($row['created_at']))
+        : null;
 
-    // Cek apakah perangkat masih aktif (data masuk <= 15 detik terakhir)
-    $last_time = strtotime($row['created_at']);
-    if ($last_time !== false && (time() - $last_time) <= 15) {
+    // Gunakan waktu server (last_seen) untuk menentukan status Online/Offline
+    $last_seen_ts = $row['last_seen'] ? strtotime($row['last_seen']) : false;
+    $threshold = 30; // detik, bisa kamu ubah sesuai kebutuhan
+    if ($last_seen_ts !== false && (time() - $last_seen_ts) <= $threshold) {
         $response['status_perangkat'] = 'Online';
     }
 }
 
-// Header JSON & output respons
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
