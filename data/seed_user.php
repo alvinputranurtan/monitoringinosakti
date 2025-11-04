@@ -7,7 +7,7 @@ require_once __DIR__.'/../functions/config.php';
 // ================================
 $username = 'AlvinUser';
 $email = 'alvinuser@inosakti.com';
-$password = 'AlvinUser22025';
+$password = 'AlvinUser2025';
 $role = 'user';
 $data_user = [
     'rumah' => 'klipang',

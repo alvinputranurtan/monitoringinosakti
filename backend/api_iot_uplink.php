@@ -3,7 +3,7 @@
 include 'config.php';
 header('Content-Type: application/json');
 
-// ===== Ambil & parse payload JSON =====
+// === Ambil & parse payload JSON ===
 $payload = file_get_contents('php://input');
 $body = json_decode($payload, true);
 
@@ -13,16 +13,15 @@ if (!$body || !isset($body['header']) || !isset($body['header']['api_key'])) {
     exit;
 }
 
-// ===== Ambil data dari header =====
 $api_key = $body['header']['api_key'];
 $device_id = $body['header']['device_id'] ?? null;
-$timestamp = $body['header']['timestamp'] ?? null; // boleh null
+$timestamp = $body['header']['timestamp'] ?? null;
 $data_monitor = $body['data'] ?? [];
 
-// ===== Validasi API key =====
+// === Validasi API key ===
 $sql = "SELECT device_id FROM device_auth 
         WHERE api_key_sha256 = UNHEX(SHA2(?, 256)) 
-        AND status = 'active' 
+        AND status='active'
         AND (expires_at IS NULL OR expires_at > NOW())";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param('s', $api_key);
@@ -34,21 +33,28 @@ if ($result->num_rows === 0) {
     echo json_encode(['status' => 'error', 'message' => 'API key tidak valid']);
     exit;
 }
+
 $row = $result->fetch_assoc();
 $auth_device_id = (int) $row['device_id'];
 
-// ===== Cocokkan device_id bila dikirim =====
+// === Cocokkan device_id bila dikirim ===
 if ($device_id && (int) $device_id !== $auth_device_id) {
     http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'Device ID tidak sesuai dengan API key']);
     exit;
 }
 
-// ===== Siapkan data JSON untuk kolom data_monitor =====
+// === Validasi timestamp ===
+if ($timestamp) {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $timestamp)) {
+        $timestamp = null; // fallback ke waktu server
+    }
+}
+
+// === Encode data_monitor ke JSON ===
 $json_data = json_encode($data_monitor, JSON_UNESCAPED_UNICODE);
 
-// ===== Insert ke monitor =====
-// created_at dari header.timestamp jika valid, else pakai default CURRENT_TIMESTAMP (WIB)
+// === Insert data ke tabel monitor ===
 if ($timestamp) {
     $insert = $conn->prepare('INSERT INTO monitor (device_id, data_monitor, created_at) VALUES (?, ?, ?)');
     $insert->bind_param('iss', $auth_device_id, $json_data, $timestamp);
