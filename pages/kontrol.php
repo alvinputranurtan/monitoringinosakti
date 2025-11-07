@@ -1,103 +1,153 @@
 <?php
 require_once __DIR__.'/../functions/config.php';
 
+// Ambil konfigurasi aktif terbaru
 $sql = 'SELECT id, data_configuration FROM configurations WHERE is_active = 1 ORDER BY id DESC LIMIT 1';
 $res = $conn->query($sql);
+
 if (!$res || $res->num_rows === 0) {
     echo "<div class='alert alert-warning text-center mt-4'>Belum ada konfigurasi aktif.</div>";
     exit;
 }
-$row = $res->fetch_assoc();
-$config_id = $row['id'];
-$config = json_decode($row['data_configuration'], true);
-$kontrol = $config['kontrol'] ?? [
-    'button' => [
-        'pompa_air' => 0,
-        'pompa_nutrisi' => 0,
-        'kipas_pendingin' => 0,
-    ],
-    'minutes' => [
-        'durasi_pompa_on' => 1,
-        'durasi_pompa_off' => 10,
-    ],
-    'dates' => [
-        'penyiraman_terjadwal' => date('Y-m-d\TH:i'),
-    ],
-];
-?>
 
+$row = $res->fetch_assoc();
+$config_id = (int) $row['id'];
+$config = json_decode($row['data_configuration'], true) ?: [];
+
+// Ambil struktur fleksibel
+$kontrol = $config['kontrol'] ?? [];
+$choose = $config['web_control']['choose'] ?? [];
+
+// Map opsi dropdown per field (bisa diisi dari DB kalau mau)
+$optionsMap = [
+    'plant_type' => ['potato', 'tomato', 'lettuce', 'cabbage', 'spinach'],
+    // tambahkan mapping lain bila ada field choose lain
+];
+
+// Helper aman untuk teks
+function e($s)
+{
+    return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+}
+?>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Kontrol Otomatis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card-custom-monitoring {
+      background: rgba(255,255,255,0.85);
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      height: 100%;
+    }
+    .circle-button {
+      width: 100px; height: 100px; border-radius: 50%; border: none;
+      font-weight: 600; color: #fff; transition: all .3s ease;
+    }
+    .circle-button.active { background: #27ae60; }
+    .circle-button.inactive { background: #e74c3c; }
+    .section-title { border-bottom: 1px solid #eee; padding-bottom: .5rem; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
 <div class="container my-4">
-  <h4 class="fw-bold mb-4 text-center">Kontrol Otomatis</h4>
+  <h4 class="fw-bold mb-1 text-center">Kontrol Otomatis</h4>
+  <p class="text-center text-muted mb-4">Semua kontrol dibaca langsung dari konfigurasi aktif</p>
 
   <div class="row g-4" id="kontrolContainer" data-config-id="<?php echo $config_id; ?>">
 
-    <!-- BUTTON -->
-    <?php foreach ($kontrol['button'] as $label => $val) { ?>
-    <div class="col-md-4 col-6">
-      <div class="card-custom-monitoring text-center p-4">
-        <h6 class="mb-3"><?php echo ucwords(str_replace('_', ' ', $label)); ?></h6>
-        <button class="circle-button <?php echo $val ? 'active' : 'inactive'; ?>" 
-                data-type="button"
-                data-key="<?php echo $label; ?>"
-                data-value="<?php echo $val; ?>">
-          <?php echo $val ? 'ON' : 'OFF'; ?>
-        </button>
-      </div>
-    </div>
-    <?php } ?>
+   <?php
+// BUTTONS
+if (isset($kontrol['button']) && is_array($kontrol['button']) && count($kontrol['button']) > 0) {
+    echo '<div class="col-12"><h6 class="section-title">Tombol (ON/OFF)</h6></div>';
+    foreach ($kontrol['button'] as $label => $val) {
+        $labelText = ucwords(str_replace('_', ' ', $label));
+        $isOn = (int) $val === 1;
+        include __DIR__.'/../components/control/button_card.php';
+    }
+}
 
-    <!-- MINUTES -->
-    <?php foreach ($kontrol['minutes'] as $label => $val) { ?>
-    <div class="col-md-4 col-6">
-      <div class="card-custom-monitoring text-center p-4">
-        <h6 class="mb-3"><?php echo ucwords(str_replace('_', ' ', $label)); ?></h6>
-        <form class="formDurasi" data-type="minutes" data-key="<?php echo $label; ?>">
-          <input type="number" class="form-control text-center mb-2 kontrol-input"
-                 value="<?php echo $val; ?>" min="0">
-          <button class="btn btn-success px-3" type="submit">Simpan</button>
-        </form>
-      </div>
-    </div>
-    <?php } ?>
+// MINUTES
+if (isset($kontrol['minutes']) && is_array($kontrol['minutes']) && count($kontrol['minutes']) > 0) {
+    echo '<div class="col-12"><h6 class="section-title">Durasi (menit/detik)</h6></div>';
+    foreach ($kontrol['minutes'] as $label => $val) {
+        $labelText = ucwords(str_replace('_', ' ', $label));
+        include __DIR__.'/../components/control/minutes_card.php';
+    }
+}
 
-    <!-- DATES -->
-    <?php foreach ($kontrol['dates'] as $label => $val) { ?>
-    <div class="col-md-4 col-6">
-      <div class="card-custom-monitoring text-center p-4">
-        <h6 class="mb-3"><?php echo ucwords(str_replace('_', ' ', $label)); ?></h6>
-        <form class="formDate" data-type="dates" data-key="<?php echo $label; ?>">
-          <input type="datetime-local" class="form-control text-center mb-2 kontrol-input"
-                 value="<?php echo $val; ?>">
-          <button class="btn btn-success px-3" type="submit">Simpan</button>
-        </form>
-      </div>
-    </div>
-    <?php } ?>
+// DATES
+if (isset($kontrol['dates']) && is_array($kontrol['dates']) && count($kontrol['dates']) > 0) {
+    echo '<div class="col-12"><h6 class="section-title">Jadwal (Tanggal & Waktu)</h6></div>';
+    foreach ($kontrol['dates'] as $label => $val) {
+        $labelText = ucwords(str_replace('_', ' ', $label));
+        include __DIR__.'/../components/control/dates_card.php';
+    }
+}
+
+// CHOOSE (Dropdown)
+if (isset($choose) && is_array($choose) && count($choose) > 0) {
+    echo '<div class="col-12"><h6 class="section-title">Pilihan (Dropdown)</h6></div>';
+    foreach ($choose as $label => $selectedVal) {
+        $labelText = ucwords(str_replace('_', ' ', $label));
+        $options = $optionsMap[$label] ?? [$selectedVal];
+        include __DIR__.'/../components/control/choose_card.php';
+    }
+}
+
+// Jika benar-benar tidak ada kontrol
+if (
+    (!isset($kontrol) || empty($kontrol))
+    && (!isset($choose) || empty($choose))
+) {
+    echo "<div class='col-12'><div class='alert alert-warning text-center'>Belum ada data kontrol pada konfigurasi ini.</div></div>";
+}
+?>
+
   </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-const kontrolState = {
-  button: {},
-  minutes: {},
-  dates: {}
-};
+// State fleksibel
+const kontrolState = { button:{}, minutes:{}, dates:{}, choose:{} };
 
-// --- Inisialisasi state dari HTML ---
+// Ambil state terbaru dari UI
 function refreshStateFromUI() {
-  $('.circle-button').each(function() {
-    kontrolState.button[$(this).data('key')] = $(this).data('value') ? 1 : 0;
+  // Buttons
+  $('#kontrolContainer .circle-button').each(function() {
+    const key = $(this).data('key');
+    const v = $(this).data('value') ? 1 : 0;
+    if (key) kontrolState.button[key] = v;
   });
-  $('.formDurasi').each(function() {
-    kontrolState.minutes[$(this).data('key')] = $(this).find('input').val();
+
+  // Minutes
+  $('#kontrolContainer form.formDurasi').each(function() {
+    const key = $(this).data('key');
+    const v = $(this).find('input[type="number"]').val();
+    if (key) kontrolState.minutes[key] = v;
   });
-  $('.formDate').each(function() {
-    kontrolState.dates[$(this).data('key')] = $(this).find('input').val();
+
+  // Dates
+  $('#kontrolContainer form.formDate').each(function() {
+    const key = $(this).data('key');
+    const v = $(this).find('input[type="datetime-local"]').val();
+    if (key) kontrolState.dates[key] = v;
+  });
+
+  // Choose
+  $('#kontrolContainer form.formChoose').each(function() {
+    const key = $(this).data('key');
+    const v = $(this).find('select').val();
+    if (key) kontrolState.choose[key] = v;
   });
 }
 
-// --- Fungsi untuk simpan snapshot penuh ---
+// Simpan snapshot ke server
 function saveSnapshot() {
   const configId = $('#kontrolContainer').data('config-id');
   $.ajax({
@@ -109,50 +159,37 @@ function saveSnapshot() {
       kontrol: JSON.stringify(kontrolState)
     },
     success: res => {
-      if (res.success) {
-        console.log('✅', res.message);
+      if (!res.success) {
+        alert('Gagal menyimpan: ' + (res.message || 'Unknown error'));
       } else {
-        alert('❌ ' + res.message);
+        console.log('✅ Saved:', res.message);
       }
     },
-    error: () => alert('Server error (update_kontrol.php tidak ditemukan)')
+    error: xhr => {
+      alert('Server error (update_kontrol.php).');
+    }
   });
 }
 
-// --- Klik tombol (auto save) ---
-$('.circle-button').on('click', function() {
-  const key = $(this).data('key');
+// Delegated events
+// Toggle button
+$(document).on('click', '.circle-button', function(){
   const newVal = $(this).data('value') ? 0 : 1;
   $(this).data('value', newVal);
   $(this).toggleClass('active inactive').text(newVal ? 'ON' : 'OFF');
-
   refreshStateFromUI();
-  saveSnapshot(); // langsung commit snapshot lengkap
+  saveSnapshot();
 });
 
-// --- Submit form minutes/dates (auto save snapshot juga) ---
-$('.formDurasi, .formDate').on('submit', function(e) {
+// Minutes & Dates submit
+$(document).on('submit', 'form.formDurasi, form.formDate, form.formChoose', function(e){
   e.preventDefault();
   refreshStateFromUI();
   saveSnapshot();
 });
-</script>
 
-<style>
-.card-custom-monitoring {
-  background: rgba(255,255,255,0.85);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.circle-button {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: none;
-  font-weight: 600;
-  color: #fff;
-  transition: all .3s ease;
-}
-.circle-button.active { background: #27ae60; }
-.circle-button.inactive { background: #e74c3c; }
-</style>
+// Init first snapshot from rendered UI
+refreshStateFromUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+    "device_configuration": {
+        "plant_time": "2025-11-01T18:00",
+        "sprayer_pump_on_duration_1": "1",
+        "sprayer_pump_on_duration_2": "1",
+        "sprayer_pump_on_duration_3": "1",
+        "sprayer_pump_off_duration_1": "10",
+        "sprayer_pump_off_duration_2": "15",
+        "sprayer_pump_off_duration_3": "20",
+        "nutrition_pump_on_duration": "1",
+        "nutrtition_pump_off_duration": "720",
+        "uv_ligt_on_at": "18:00",
+        "uv_light_duration": "30"
+    },
+    "web_control": {
+        "choose": {
+            "plant_type": "potato"
+        }
+    }
+}
